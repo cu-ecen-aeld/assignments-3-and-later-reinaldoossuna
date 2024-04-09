@@ -62,7 +62,12 @@ then
     sudo rm  -rf ${OUTDIR}/rootfs
 fi
 
-# TODO: Create necessary base directories
+# necessary base directories
+mkdir rootfs
+cd rootfs
+mkdir bin dev etc lib lib64 proc sys sbin tmp usr var home
+mkdir usr/bin usr/lib usr/sbin
+mkdir var/log
 
 cd "$OUTDIR"
 if [ ! -d "${OUTDIR}/busybox" ]
