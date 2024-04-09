@@ -34,7 +34,22 @@ if [ ! -e ${OUTDIR}/linux-stable/arch/${ARCH}/boot/Image ]; then
     echo "Checking out version ${KERNEL_VERSION}"
     git checkout ${KERNEL_VERSION}
 
-    # TODO: Add your kernel build steps here
+    # deep clean
+    echo "cleaning"
+    make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} mrproper
+    # defconfig
+    echo "config"
+    make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} defconfig
+    # build
+    echo "building"
+    make -j$NPARALLEL ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} all
+    # modules
+    echo "modules"
+    make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} modules
+    # dts
+    echo "dts"
+    make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} dtbs
+    echo "kernel build done"
 fi
 
 echo "Adding the Image in outdir"
