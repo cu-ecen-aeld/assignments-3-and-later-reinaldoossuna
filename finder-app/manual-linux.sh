@@ -120,6 +120,7 @@ cp -a writer autorun-qemu.sh finder.sh finder-test.sh "${OUTDIR}/rootfs/home"
 mkdir "${OUTDIR}/rootfs/home/conf"
 cp -a conf/username.txt conf/assignment.txt "${OUTDIR}/rootfs/home/conf"
 
-# TODO: Chown the root directory
+# Chown the root directory
+sudo chown -R root:root ${OUTDIR}/rootfs
 
 # TODO: Create initramfs.cpio.gz
