@@ -10,18 +10,18 @@ bool should_close = false;
 bool as_daemon = false;
 static void signal_handler(int signo);
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   openlog(NULL, 0, LOG_USER);
 
   // handle d flags
   int c;
   while ((c = getopt(argc, argv, "d")) != -1) {
     switch (c) {
-      case 'd':
-        as_daemon = true;
-        break;
-      default:
-        abort();
+    case 'd':
+      as_daemon = true;
+      break;
+    default:
+      abort();
     }
   }
 
@@ -181,7 +181,7 @@ void send_file(int fd) {
   fclose(fptr);
 }
 
-void sigchld_handler(int s) {
+void sigchld_handler([[maybe_unused]] int s) {
   // waitpid() might overwrite errno, so we save and restore it:
   int saved_errno = errno;
 
