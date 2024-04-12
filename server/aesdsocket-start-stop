@@ -1,0 +1,16 @@
+#! /bin/sh
+
+case "$1" in
+    start)
+        echo "Starting socket server"
+        start-stop-daemon --start --name socketserver --startas /usr/bin/aesdsocket -- -d
+    ;;
+    stop)
+        echo "Stopping socket server"
+        start-stop-daemon --stop -x /usr/bin/aesdsocket --retry 5
+        ;;
+    *)
+        exit 1
+esac
+
+exit 0
