@@ -4,16 +4,19 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <stdbool.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <syslog.h>
 #include <unistd.h>
-#include <stdbool.h>
 
 // Optional: use these functions to add debug or error prints to your
 // application
-#ifdef SERVER
+#ifdef DEV
+#define DEBUG_LOG(msg, ...) printf("server: " msg "\n", ##__VA_ARGS__)
+#define ERROR_LOG(msg, ...) printf("server ERROR: " msg "\n", ##__VA_ARGS__)
+#else
 #ifdef DEBUG
 #define DEBUG_LOG(msg, ...) syslog(LOG_INFO, "server: " msg "\n", ##__VA_ARGS__)
 #else
@@ -21,9 +24,6 @@
 #endif
 #define ERROR_LOG(msg, ...)                                                    \
   syslog(LOG_ERR, "server: ERROR: " msg "\n", ##__VA_ARGS__)
-#else
-#define DEBUG_LOG(msg, ...) printf("server: " msg "\n", ##__VA_ARGS__)
-#define ERROR_LOG(msg, ...) printf("server ERROR: " msg "\n", ##__VA_ARGS__)
 #endif
 
 #define PORT "9000" // the port users will be connecting to
