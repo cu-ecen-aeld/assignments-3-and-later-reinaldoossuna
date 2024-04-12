@@ -9,3 +9,7 @@ test.sh.log
 /compile_commands.json
 server/aesdsocket
 */compile_commands.json
+*/.cache
+/.cache/
+/server/valgrind-out.txt
+/testfile.txt
