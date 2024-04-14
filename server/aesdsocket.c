@@ -181,7 +181,8 @@ void send_file(int fd) {
   fclose(fptr);
 }
 
-void sigchld_handler([[maybe_unused]] int s) {
+void sigchld_handler(int s) {
+  (void)s; // unused variable
   // waitpid() might overwrite errno, so we save and restore it:
   int saved_errno = errno;
 
