@@ -155,11 +155,9 @@ void recv_to_file(int fd) {
       ERROR_LOG("recv");
       exit(0);
     }
+    DEBUG_LOG("receive from client: %s", recv_buf);
     fwrite(recv_buf, bytes_recv, 1, fptr);
-  } while (bytes_recv != 0);
-
-  DEBUG_LOG("receive from client: %s", recv_buf);
-  fwrite(recv_buf, bytes_recv, 1, fptr);
+  } while (bytes_recv == MAXDATASIZE);
 
   fclose(fptr);
   free(recv_buf);
