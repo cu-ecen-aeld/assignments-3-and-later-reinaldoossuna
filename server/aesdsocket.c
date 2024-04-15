@@ -180,7 +180,7 @@ void send_file(int fd) {
 }
 
 void sigchld_handler(int s) {
-  (void)s; // unused variable
+  (void) s; //unused variable
   // waitpid() might overwrite errno, so we save and restore it:
   int saved_errno = errno;
 
