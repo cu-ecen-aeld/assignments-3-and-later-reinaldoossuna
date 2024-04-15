@@ -11,10 +11,11 @@ jobs:
         runs-on: self-hosted
         steps:
           - uses: actions/checkout@v2
-          - run: ulimit -n
-          - run: ulimit -n 1024  # workaround neededed by valgrind in docker running in Fedora 37
           - name: Checkout submodules
             run : git submodule update --init --recursive
+          - name: Check ulimit
+            run: ulimit -n
+          - run: ulimit -n 1024  # workaround neededed by valgrind in docker running in Fedora 37
           - name: Run unit test
             run: ./unit-test.sh
     full-test:
