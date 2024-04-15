@@ -13,9 +13,6 @@ jobs:
           - uses: actions/checkout@v2
           - name: Checkout submodules
             run : git submodule update --init --recursive
-          - name: Check ulimit
-            run: ulimit -n
-          - run: ulimit -n 1024  # workaround neededed by valgrind in docker running in Fedora 37
           - name: Run unit test
             run: ./unit-test.sh
     full-test:
@@ -25,5 +22,7 @@ jobs:
           - uses: actions/checkout@v2
           - name: Checkout submodules
             run : git submodule update --init --recursive
+          - run: ulimit -n
+          - run: ulimit -n 1024  # workaround neededed by valgrind in docker running in Fedora 37
           - name: Run full test
             run: ./full-test.sh
