@@ -38,5 +38,11 @@ void send_file(int fd);
 void sigchld_handler(int s);
 // get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa);
+int set_signal_handler(void);
+int get_listener(void);
+bool handle_flags(int argc, char ** argv);
+int reap_dead_processes(void);
+bool is_error(int val);
+
 
 #endif // AESDSOCKET_H_
