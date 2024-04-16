@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <poll.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,28 +45,39 @@ int main(int argc, char **argv) {
 
   DEBUG_LOG("waiting for connections...");
 
+  struct pollfd pfds = {.fd = sockfd, .events = POLLIN};
+
   while (!should_close) { // main accept() loop
-
-    struct sockaddr_storage their_addr; // connector's address information
-    char s[INET6_ADDRSTRLEN];
-    socklen_t sin_size = sizeof their_addr;
-
-    int new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
-
-    if (is_error(new_fd)) {
-      ERROR_LOG("accept");
-      continue;
+    int poll_count = poll(&pfds, 1, 5000);
+    if (is_error(poll_count)) {
+      ERROR_LOG("poll");
+      exit(1);
     }
 
-    inet_ntop(their_addr.ss_family, get_in_addr((struct sockaddr *)&their_addr),
-              s, sizeof s);
-    DEBUG_LOG("Accept connection from %s", s);
+    struct sockaddr_storage their_addr; // connector's address information
+    socklen_t sin_size = sizeof their_addr;
+    if (pfds.revents & POLLIN) {
 
-    recv_to_file(new_fd);
-    send_file(new_fd);
+      char s[INET6_ADDRSTRLEN];
+      int new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
 
-    close(new_fd); // parent doesn't need this
-    DEBUG_LOG("Closed connection from %s", s);
+      if (is_error(new_fd)) {
+        ERROR_LOG("accept");
+        continue;
+      }
+
+      inet_ntop(their_addr.ss_family,
+                get_in_addr((struct sockaddr *)&their_addr), s, sizeof s);
+      DEBUG_LOG("Accept connection from %s", s);
+
+      recv_to_file(new_fd);
+      send_file(new_fd);
+
+      close(new_fd); // parent doesn't need this
+      DEBUG_LOG("Closed connection from %s", s);
+    } else {
+      DEBUG_LOG("No request. trying again");
+    }
   }
 
   DEBUG_LOG("Deleting file %s", FILEPATH);
