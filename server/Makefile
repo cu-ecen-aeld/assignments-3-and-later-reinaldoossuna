@@ -4,7 +4,7 @@
 # @file
 # @version 0.1
 
-CC=$(CROSS_COMPILE)gcc
+CC ?= $(CROSS_COMPILE)gcc
 CFLAGS= -O2 -Wall -Werror -Wextra
 
 all: aesdsocket
