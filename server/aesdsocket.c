@@ -4,13 +4,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 
 #include "aesdsocket.h"
+
+FILE* fptr = NULL;
+pthread_mutex_t fptr_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 bool should_close = false;
 static void signal_handler(int signo);
 
 int main(int argc, char **argv) {
   openlog(NULL, 0, LOG_USER);
+
+  fptr = fopen(FILEPATH, "wr+");
+  if (fptr == NULL) {
+    ERROR_LOG("Error opening file FILEPATH");
+    exit(1);
+  }
 
   bool as_daemon = handle_flags(argc, argv);
   if (as_daemon) {
@@ -80,6 +91,7 @@ int main(int argc, char **argv) {
     }
   }
 
+  fclose(fptr);
   DEBUG_LOG("Deleting file %s", FILEPATH);
   remove(FILEPATH);
   return 0;
@@ -88,12 +100,7 @@ int main(int argc, char **argv) {
 void recv_to_file(int fd) {
   char *recv_buf = (char *)malloc(MAXDATASIZE);
 
-  FILE *fptr = fopen(FILEPATH, "a+");
-  if (fptr == NULL) {
-    ERROR_LOG("Error opening file FILEPATH");
-    exit(1);
-  }
-
+  pthread_mutex_lock(&fptr_mutex);
   int bytes_recv;
   do {
     if ((bytes_recv = recv(fd, recv_buf, MAXDATASIZE, 0)) == -1) {
@@ -104,16 +111,13 @@ void recv_to_file(int fd) {
     fwrite(recv_buf, bytes_recv, 1, fptr);
   } while (bytes_recv == MAXDATASIZE);
 
-  fclose(fptr);
+  pthread_mutex_unlock(&fptr_mutex);
   free(recv_buf);
 }
 
 void send_file(int fd) {
-  FILE *fptr = fopen(FILEPATH, "r");
-  if (fptr == NULL) {
-    ERROR_LOG("Error opening file FILEPATH");
-    exit(1);
-  }
+  pthread_mutex_lock(&fptr_mutex);
+  fseek(fptr, 0, SEEK_SET); // seek to begin of file
 
   char sendbuffer[124];
   int b;
@@ -121,7 +125,7 @@ void send_file(int fd) {
     DEBUG_LOG("Sending to client: %s", sendbuffer);
     send(fd, sendbuffer, b, 0);
   }
-  fclose(fptr);
+  pthread_mutex_unlock(&fptr_mutex);
 }
 
 void sigchld_handler(int s) {
