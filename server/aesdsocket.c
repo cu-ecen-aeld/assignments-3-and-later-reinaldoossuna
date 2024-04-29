@@ -4,11 +4,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <pthread.h>
 
 #include "aesdsocket.h"
 
-FILE* fptr = NULL;
+FILE *fptr = NULL;
 pthread_mutex_t fptr_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 bool should_close = false;

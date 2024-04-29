@@ -4,12 +4,15 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <pthread.h>
 #include <stdbool.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <syslog.h>
 #include <unistd.h>
+
+#include "queue.h"
 
 // Optional: use these functions to add debug or error prints to your
 // application
@@ -40,9 +43,23 @@ void sigchld_handler(int s);
 void *get_in_addr(struct sockaddr *sa);
 int set_signal_handler(void);
 int get_listener(void);
-bool handle_flags(int argc, char ** argv);
+bool handle_flags(int argc, char **argv);
 int reap_dead_processes(void);
 bool is_error(int val);
 
+typedef struct {
+  bool is_finished;
+  int fd;
+  pthread_t thread;
+} thread_info_t;
+
+struct list_threads {
+    thread_info_t* tinfo;
+    LIST_ENTRY(list_threads) entries;
+};
+
+LIST_HEAD(list_head, list_threads) head;
+
+void clean_threads(struct list_head* head);
 
 #endif // AESDSOCKET_H_
