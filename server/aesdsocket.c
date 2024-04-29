@@ -13,6 +13,19 @@ pthread_mutex_t fptr_mutex = PTHREAD_MUTEX_INITIALIZER;
 bool should_close = false;
 static void signal_handler(int signo);
 
+static void *thread_work(void *arg) {
+  thread_info_t *tinfo = (thread_info_t *)arg;
+  DEBUG_LOG("Starting thread: %lu fd: %d", tinfo->thread, tinfo->fd);
+
+  recv_to_file(tinfo->fd);
+  send_file(tinfo->fd);
+
+  tinfo->is_finished = true;
+  DEBUG_LOG("Finishing thread: %lu fd: %d", tinfo->thread, tinfo->fd);
+  close(tinfo->fd);
+  pthread_exit(NULL);
+}
+
 int main(int argc, char **argv) {
   openlog(NULL, 0, LOG_USER);
 
@@ -80,14 +93,21 @@ int main(int argc, char **argv) {
                 get_in_addr((struct sockaddr *)&their_addr), s, sizeof s);
       DEBUG_LOG("Accept connection from %s", s);
 
-      recv_to_file(new_fd);
-      send_file(new_fd);
+      thread_info_t* tinfo = (thread_info_t*) malloc(sizeof(thread_info_t));
+      tinfo->fd = new_fd;
+      tinfo->is_finished = false;
+      pthread_create(&tinfo->thread, NULL, thread_work, tinfo);
 
-      close(new_fd); // parent doesn't need this
+      struct list_threads* datap = (struct list_threads*) malloc(sizeof(struct list_threads));
+      datap->tinfo = tinfo;
+      LIST_INSERT_HEAD(&head, datap, entries);
+
       DEBUG_LOG("Closed connection from %s", s);
     } else {
       DEBUG_LOG("No request. trying again");
     }
+
+    clean_threads(&head);
   }
 
   fclose(fptr);
@@ -257,3 +277,17 @@ int reap_dead_processes(void) {
 }
 
 bool is_error(int val) { return val < 0; }
+
+void clean_threads(struct list_head *head) { struct list_threads *datap, *tmp;
+  LIST_FOREACH_SAFE(datap, head, entries, tmp){
+    thread_info_t* tinfo = datap->tinfo;
+    if (tinfo->is_finished) {
+      DEBUG_LOG("Clening thread: %lu fd: %d", tinfo->thread, tinfo->fd);
+      LIST_REMOVE(datap, entries);
+
+      pthread_join(tinfo->thread, NULL);
+      free(tinfo);
+      free(datap);
+    }
+  }
+}
