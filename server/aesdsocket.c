@@ -97,12 +97,13 @@ int main(int argc, char **argv) {
                 get_in_addr((struct sockaddr *)&their_addr), s, sizeof s);
       DEBUG_LOG("Accept connection from %s", s);
 
-      thread_info_t* tinfo = (thread_info_t*) malloc(sizeof(thread_info_t));
+      thread_info_t *tinfo = (thread_info_t *)malloc(sizeof(thread_info_t));
       tinfo->fd = new_fd;
       tinfo->is_finished = false;
       pthread_create(&tinfo->thread, NULL, thread_work, tinfo);
 
-      struct list_threads* datap = (struct list_threads*) malloc(sizeof(struct list_threads));
+      struct list_threads *datap =
+          (struct list_threads *)malloc(sizeof(struct list_threads));
       datap->tinfo = tinfo;
       LIST_INSERT_HEAD(&head, datap, entries);
 
@@ -111,9 +112,10 @@ int main(int argc, char **argv) {
       DEBUG_LOG("No request. trying again");
     }
 
-    clean_threads(&head);
+    clean_threads(&head, false);
   }
 
+  clean_threads(&head, true);
   pthread_join(timer_writer, NULL);
   fclose(fptr);
   DEBUG_LOG("Deleting file %s", FILEPATH);
@@ -283,10 +285,11 @@ int reap_dead_processes(void) {
 
 bool is_error(int val) { return val < 0; }
 
-void clean_threads(struct list_head *head) { struct list_threads *datap, *tmp;
-  LIST_FOREACH_SAFE(datap, head, entries, tmp){
-    thread_info_t* tinfo = datap->tinfo;
-    if (tinfo->is_finished) {
+void clean_threads(struct list_head *head, bool wait) {
+  struct list_threads *datap, *tmp;
+  LIST_FOREACH_SAFE(datap, head, entries, tmp) {
+    thread_info_t *tinfo = datap->tinfo;
+    if (tinfo->is_finished || wait) {
       DEBUG_LOG("Clening thread: %lu fd: %d", tinfo->thread, tinfo->fd);
       LIST_REMOVE(datap, entries);
 

@@ -62,6 +62,6 @@ struct list_threads {
 
 LIST_HEAD(list_head, list_threads) head;
 
-void clean_threads(struct list_head* head);
+void clean_threads(struct list_head* head, bool wait);
 
 #endif // AESDSOCKET_H_
