@@ -78,7 +78,6 @@ int main(int argc, char **argv) {
     int poll_count = poll(&pfds, 1, 5000);
     if (is_error(poll_count)) {
       ERROR_LOG("poll");
-      exit(1);
     }
 
     struct sockaddr_storage their_addr; // connector's address information
@@ -131,7 +130,6 @@ void recv_to_file(int fd) {
   do {
     if ((bytes_recv = recv(fd, recv_buf, MAXDATASIZE, 0)) == -1) {
       ERROR_LOG("recv");
-      exit(0);
     }
     DEBUG_LOG("receive from client: %s", recv_buf);
     fwrite(recv_buf, bytes_recv, 1, fptr);
