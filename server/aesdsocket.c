@@ -12,6 +12,7 @@ pthread_mutex_t fptr_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 bool should_close = false;
 static void signal_handler(int signo);
+void *time_writer_work(void *arg);
 
 static void *thread_work(void *arg) {
   thread_info_t *tinfo = (thread_info_t *)arg;
@@ -66,6 +67,9 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
+  pthread_t timer_writer;
+  pthread_create(&timer_writer, NULL, time_writer_work, NULL);
+
   DEBUG_LOG("waiting for connections...");
 
   struct pollfd pfds = {.fd = sockfd, .events = POLLIN};
@@ -110,6 +114,7 @@ int main(int argc, char **argv) {
     clean_threads(&head);
   }
 
+  pthread_join(timer_writer, NULL);
   fclose(fptr);
   DEBUG_LOG("Deleting file %s", FILEPATH);
   remove(FILEPATH);
@@ -290,4 +295,38 @@ void clean_threads(struct list_head *head) { struct list_threads *datap, *tmp;
       free(datap);
     }
   }
+}
+
+int get_time_stamp(char *timestamp, size_t size) {
+  time_t current_time;
+  time(&current_time);
+
+  struct tm *time_info;
+  time_info = localtime(&current_time);
+
+  return strftime(timestamp, size, "timestamp:%a, %d %b %Y %H:%M:%S %z\n",
+                  time_info);
+}
+
+void *time_writer_work(void *arg) {
+  UNUSED(arg);
+
+  char timestamp[64];
+  while (!should_close) {
+    DEBUG_LOG("Writing timestamp");
+    int len = get_time_stamp(timestamp, sizeof(timestamp));
+    if (is_error(len)) {
+      ERROR_LOG("failed to get time stamp");
+    }
+
+    DEBUG_LOG("%s", timestamp);
+    pthread_mutex_lock(&fptr_mutex);
+    fwrite(timestamp, len, 1, fptr);
+    fflush(fptr);
+
+    pthread_mutex_unlock(&fptr_mutex);
+    sleep(10);
+  }
+
+  pthread_exit(NULL);
 }

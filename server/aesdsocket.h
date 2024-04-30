@@ -36,6 +36,8 @@
 #define MAXDATASIZE 1024
 #define FILEPATH "/var/tmp/aesdsocketdata"
 
+#define UNUSED(x) (void)(x)
+
 void recv_to_file(int fd);
 void send_file(int fd);
 void sigchld_handler(int s);
