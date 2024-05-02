@@ -50,9 +50,10 @@ int main(int argc, char **argv) {
   }
 
   int sockfd = get_listener(); // listen on sock_fd, new connection on new_fd
-  if (is_error(sockfd)) {
-    ERROR_LOG("Failed to get listener");
-    exit(1);
+  while (is_error(sockfd)) {
+    ERROR_LOG("Failed to get listener, trying again in 5 sec");
+    sleep(5);
+    sockfd = get_listener();
   }
 
   DEBUG_LOG("Listening");
