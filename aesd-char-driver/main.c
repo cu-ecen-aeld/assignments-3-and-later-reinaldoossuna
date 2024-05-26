@@ -16,7 +16,9 @@
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/printk.h>
+#include <linux/slab.h>
 #include <linux/types.h>
+
 int aesd_major = 0; // use dynamic major
 int aesd_minor = 0;
 
@@ -110,10 +112,19 @@ void aesd_cleanup_module(void) {
 
   cdev_del(&aesd_device.cdev);
 
-  /**
-   * TODO: cleanup AESD specific poritions here as necessary
-   */
+   uint8_t index;
+  struct aesd_buffer_entry *entry;
 
+  while (mutex_lock_interruptible(&aesd_device.buffer_mutex) != 0) {
+  }
+
+  AESD_CIRCULAR_BUFFER_FOREACH(entry, &aesd_device.buffer, index) {
+    PDEBUG("Free %s", entry->buffptr);
+    kfree(entry->buffptr);
+  }
+
+  mutex_unlock(&aesd_device.buffer_mutex);
+  mutex_destroy(&aesd_device.buffer_mutex);
   unregister_chrdev_region(devno, 1);
 }
 
