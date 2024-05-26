@@ -24,12 +24,15 @@
 #endif
 
 #include <linux/cdev.h>
+#include <linux/mutex.h>
+
+#include "aesd-circular-buffer.h"
 
 struct aesd_dev {
-  /**
-   * TODO: Add structure(s) and locks needed to complete assignment requirements
-   */
   struct cdev cdev; /* Char device structure      */
+
+  struct aesd_circular_buffer buffer;
+  struct mutex buffer_mutex;
 };
 
 #endif /* AESD_CHAR_DRIVER_AESDCHAR_H_ */
