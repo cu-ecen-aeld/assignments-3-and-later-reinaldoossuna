@@ -23,6 +23,8 @@
 #  define PDEBUG(fmt, args...) /* not debugging: nothing */
 #endif
 
+#include <linux/cdev.h>
+
 struct aesd_dev
 {
     /**
