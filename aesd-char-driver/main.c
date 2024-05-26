@@ -92,9 +92,8 @@ int aesd_init_module(void) {
   }
   memset(&aesd_device, 0, sizeof(struct aesd_dev));
 
-  /**
-   * TODO: initialize the AESD specific portion of the device
-   */
+  aesd_circular_buffer_init(&aesd_device.buffer);
+  mutex_init(&aesd_device.buffer_mutex);
 
   result = aesd_setup_cdev(&aesd_device);
 
