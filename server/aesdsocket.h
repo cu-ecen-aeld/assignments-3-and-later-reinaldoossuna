@@ -34,7 +34,15 @@
 #define BACKLOG 10 // how many pending connections queue will hold
 
 #define MAXDATASIZE 1024
+
+#ifndef USE_AESD_CHAR_DEVICE
+#define USE_AESD_CHAR_DEVICE 1
+#endif
+#if USE_AESD_CHAR_DEVICE == 1
+#define FILEPATH "/dev/aesdchar"
+#else
 #define FILEPATH "/var/tmp/aesdsocketdata"
+#endif
 
 #define UNUSED(x) (void)(x)
 

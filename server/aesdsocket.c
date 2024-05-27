@@ -30,6 +30,7 @@ static void *thread_work(void *arg) {
 int main(int argc, char **argv) {
   openlog(NULL, 0, LOG_USER);
 
+  DEBUG_LOG("Starting aesdsocket using %s", FILEPATH);
   fptr = fopen(FILEPATH, "wr+");
   if (fptr == NULL) {
     ERROR_LOG("Error opening file FILEPATH");
@@ -118,8 +119,10 @@ int main(int argc, char **argv) {
   clean_threads(&head, true);
   pthread_join(timer_writer, NULL);
   fclose(fptr);
+#if USE_AESD_CHAR_DEVICE == 0
   DEBUG_LOG("Deleting file %s", FILEPATH);
   remove(FILEPATH);
+#endif
   return 0;
 }
 
