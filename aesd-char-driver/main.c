@@ -64,7 +64,7 @@ ssize_t aesd_read(struct file *filp, char __user *buf, size_t count,
     goto out;
   }
 
-  PDEBUG("Read: %s", entry->buffptr);
+  PDEBUG("Read: %.*s", (int)entry->size, entry->buffptr);
   if (copy_to_user(buf, entry->buffptr, entry->size)) {
     retval = -EFAULT;
     goto out;
@@ -110,7 +110,8 @@ ssize_t aesd_write(struct file *filp, const char __user *buf, size_t count,
   */
   if (dev->partial_entry.buffptr != NULL) {
     memcpy(buffptr, dev->partial_entry.buffptr, dev->partial_entry.size);
-    PDEBUG("Free partial write %s", dev->partial_entry.buffptr);
+    PDEBUG("Free partial write %.*s", (int)dev->partial_entry.size,
+           dev->partial_entry.buffptr);
     kfree(dev->partial_entry.buffptr);
 
     // reset state
@@ -128,16 +129,16 @@ ssize_t aesd_write(struct file *filp, const char __user *buf, size_t count,
    * */
   if (buffptr[buffer_size - 1] == '\n') {
 
-    PDEBUG("Wrote: %s", buffptr);
+    PDEBUG("Wrote: %.*s", (int)buffer_size, buffptr);
     struct aesd_buffer_entry old_entry =
         aesd_circular_buffer_add_entry(&dev->buffer, &entry);
     if (old_entry.buffptr) {
-      PDEBUG("Free overwritten: %s", old_entry.buffptr);
+      PDEBUG("Free overwritten: %.*s", (int)old_entry.size, old_entry.buffptr);
       kfree(old_entry.buffptr);
     }
   } else { // current entry is a partial
     dev->partial_entry = entry;
-    PDEBUG("Partial write: %s", buffptr);
+    PDEBUG("Partial write: %.*s", (int)entry.size, entry.buffptr);
   }
 
 out:
@@ -199,7 +200,7 @@ void aesd_cleanup_module(void) {
   }
 
   AESD_CIRCULAR_BUFFER_FOREACH(entry, &aesd_device.buffer, index) {
-    PDEBUG("Free %s", entry->buffptr);
+    PDEBUG("Free %.*s", (int)entry->size, entry->buffptr);
     kfree(entry->buffptr);
   }
 
