@@ -11,6 +11,8 @@ endif
 
 EXTRA_CFLAGS += $(DEBFLAGS)
 
+ccflags-y := -std=gnu11
+
 ifneq ($(KERNELRELEASE),)
 # call from kernel build system
 obj-m	:= aesdchar.o
