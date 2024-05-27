@@ -150,6 +150,9 @@ ssize_t aesd_write(struct file *filp, const char __user *buf, size_t count,
     PDEBUG("Partial write: %.*s", (int)entry.size, entry.buffptr);
   }
 
+  *f_pos += buffer_size;
+  retval = count;
+
 out:
   mutex_unlock(&dev->buffer_mutex);
   return retval;
