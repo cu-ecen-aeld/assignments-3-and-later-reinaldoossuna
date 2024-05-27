@@ -84,7 +84,6 @@ ssize_t aesd_write(struct file *filp, const char __user *buf, size_t count,
   PDEBUG("write %zu bytes with offset %lld", count, *f_pos);
   /**
    * TODO: handle partial write
-   * TODO: handle overwriten messages
    */
 
   struct aesd_dev *dev = (struct aesd_dev *)filp->private_data;
@@ -105,7 +104,12 @@ ssize_t aesd_write(struct file *filp, const char __user *buf, size_t count,
 
   struct aesd_buffer_entry entry = {.buffptr = buffptr, .size = count};
   PDEBUG("Wrote: %s", buffptr);
-  aesd_circular_buffer_add_entry(&dev->buffer, &entry);
+  struct aesd_buffer_entry old_entry = aesd_circular_buffer_add_entry(&dev->buffer, &entry);
+  if(old_entry.buffptr) {
+    PDEBUG("Free overwritten: %s", old_entry.buffptr);
+    kfree(old_entry.buffptr);
+  }
+
 
 out:
   mutex_unlock(&dev->buffer_mutex);
