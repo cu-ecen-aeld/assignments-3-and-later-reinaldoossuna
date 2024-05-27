@@ -82,34 +82,63 @@ ssize_t aesd_write(struct file *filp, const char __user *buf, size_t count,
                    loff_t *f_pos) {
   ssize_t retval = -ENOMEM;
   PDEBUG("write %zu bytes with offset %lld", count, *f_pos);
-  /**
-   * TODO: handle partial write
-   */
 
   struct aesd_dev *dev = (struct aesd_dev *)filp->private_data;
   if (mutex_lock_interruptible(&dev->buffer_mutex)) {
     return -EINTR;
   }
 
-  char *buffptr = (char *)kmalloc(count, GFP_KERNEL);
+  // if no partial entry, than buffer_size = count
+  size_t buffer_size = count + dev->partial_entry.size;
+  char *buffptr = (char *)kmalloc(buffer_size, GFP_KERNEL);
   if (!buffptr) {
     goto out;
   }
 
-  if (copy_from_user(buffptr, buf, count)) {
+  // give space to partial buffer if exists
+  if (copy_from_user(buffptr + dev->partial_entry.size, buf, count)) {
     retval = -EFAULT;
     kfree(buffptr);
     goto out;
   }
 
-  struct aesd_buffer_entry entry = {.buffptr = buffptr, .size = count};
-  PDEBUG("Wrote: %s", buffptr);
-  struct aesd_buffer_entry old_entry = aesd_circular_buffer_add_entry(&dev->buffer, &entry);
-  if(old_entry.buffptr) {
-    PDEBUG("Free overwritten: %s", old_entry.buffptr);
-    kfree(old_entry.buffptr);
+  /*
+  ** if there's a partial entry
+  ** copy partial entry to new buffer
+  ** free partial entry buffer
+  ** reset partial_entry state
+  */
+  if (dev->partial_entry.buffptr != NULL) {
+    memcpy(buffptr, dev->partial_entry.buffptr, dev->partial_entry.size);
+    PDEBUG("Free partial write %s", dev->partial_entry.buffptr);
+    kfree(dev->partial_entry.buffptr);
+
+    // reset state
+    dev->partial_entry.buffptr = NULL;
+    dev->partial_entry.size = 0;
   }
 
+  struct aesd_buffer_entry entry = {//
+                                    .buffptr = buffptr,
+                                    .size = buffer_size};
+
+  /*
+   * if is not a partial entry
+   * push to circular buffer
+   * */
+  if (buffptr[buffer_size - 1] == '\n') {
+
+    PDEBUG("Wrote: %s", buffptr);
+    struct aesd_buffer_entry old_entry =
+        aesd_circular_buffer_add_entry(&dev->buffer, &entry);
+    if (old_entry.buffptr) {
+      PDEBUG("Free overwritten: %s", old_entry.buffptr);
+      kfree(old_entry.buffptr);
+    }
+  } else { // current entry is a partial
+    dev->partial_entry = entry;
+    PDEBUG("Partial write: %s", buffptr);
+  }
 
 out:
   mutex_unlock(&dev->buffer_mutex);

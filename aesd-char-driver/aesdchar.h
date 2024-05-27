@@ -33,6 +33,8 @@ struct aesd_dev {
 
   struct aesd_circular_buffer buffer;
   struct mutex buffer_mutex;
+
+  struct aesd_buffer_entry partial_entry;
 };
 
 #endif /* AESD_CHAR_DRIVER_AESDCHAR_H_ */
