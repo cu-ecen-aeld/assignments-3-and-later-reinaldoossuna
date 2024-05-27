@@ -18,8 +18,18 @@ static void *thread_work(void *arg) {
   thread_info_t *tinfo = (thread_info_t *)arg;
   DEBUG_LOG("Starting thread: %lu fd: %d", tinfo->thread, tinfo->fd);
 
+  pthread_mutex_lock(&fptr_mutex);
+  fptr = fopen(FILEPATH, "a+");
+  if (fptr == NULL) {
+    ERROR_LOG("Error opening file FILEPATH");
+    exit(1);
+  }
+
   recv_to_file(tinfo->fd);
   send_file(tinfo->fd);
+
+  fclose(fptr);
+  pthread_mutex_unlock(&fptr_mutex);
 
   tinfo->is_finished = true;
   DEBUG_LOG("Finishing thread: %lu fd: %d", tinfo->thread, tinfo->fd);
@@ -31,11 +41,6 @@ int main(int argc, char **argv) {
   openlog(NULL, 0, LOG_USER);
 
   DEBUG_LOG("Starting aesdsocket using %s", FILEPATH);
-  fptr = fopen(FILEPATH, "wr+");
-  if (fptr == NULL) {
-    ERROR_LOG("Error opening file FILEPATH");
-    exit(1);
-  }
 
   bool as_daemon = handle_flags(argc, argv);
   if (as_daemon) {
@@ -118,7 +123,6 @@ int main(int argc, char **argv) {
 
   clean_threads(&head, true);
   /* pthread_join(timer_writer, NULL); */
-  fclose(fptr);
 #if USE_AESD_CHAR_DEVICE == 0
   DEBUG_LOG("Deleting file %s", FILEPATH);
   remove(FILEPATH);
@@ -129,7 +133,6 @@ int main(int argc, char **argv) {
 void recv_to_file(int fd) {
   char *recv_buf = (char *)malloc(MAXDATASIZE);
 
-  pthread_mutex_lock(&fptr_mutex);
   int bytes_recv;
   do {
     if ((bytes_recv = recv(fd, recv_buf, MAXDATASIZE, 0)) == -1) {
@@ -139,12 +142,10 @@ void recv_to_file(int fd) {
     fwrite(recv_buf, bytes_recv, 1, fptr);
   } while (bytes_recv == MAXDATASIZE);
 
-  pthread_mutex_unlock(&fptr_mutex);
   free(recv_buf);
 }
 
 void send_file(int fd) {
-  pthread_mutex_lock(&fptr_mutex);
   fseek(fptr, 0, SEEK_SET); // seek to begin of file
 
   char sendbuffer[124];
@@ -153,7 +154,6 @@ void send_file(int fd) {
     DEBUG_LOG("Sending to client: %s", sendbuffer);
     send(fd, sendbuffer, b, 0);
   }
-  pthread_mutex_unlock(&fptr_mutex);
 }
 
 void sigchld_handler(int s) {
