@@ -69,8 +69,8 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
-  pthread_t timer_writer;
-  pthread_create(&timer_writer, NULL, time_writer_work, NULL);
+  /* pthread_t timer_writer; */
+  /* pthread_create(&timer_writer, NULL, time_writer_work, NULL); */
 
   DEBUG_LOG("waiting for connections...");
 
@@ -117,7 +117,7 @@ int main(int argc, char **argv) {
   }
 
   clean_threads(&head, true);
-  pthread_join(timer_writer, NULL);
+  /* pthread_join(timer_writer, NULL); */
   fclose(fptr);
 #if USE_AESD_CHAR_DEVICE == 0
   DEBUG_LOG("Deleting file %s", FILEPATH);
