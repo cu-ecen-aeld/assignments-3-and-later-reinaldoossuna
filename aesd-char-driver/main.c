@@ -157,9 +157,40 @@ out:
   mutex_unlock(&dev->buffer_mutex);
   return retval;
 }
+
+loff_t aesd_llseek(struct file *filp, loff_t off, int whence) {
+  struct aesd_dev *dev = filp->private_data;
+  loff_t newpos;
+
+  switch (whence) {
+  case 0: /* SEEK_SET */
+    newpos = off;
+    break;
+
+  case 1: /* SEEK_CUR */
+    newpos = filp->f_pos + off;
+    break;
+
+  case 2: /* SEEK_END */
+    /* newpos = dev->size + off; */
+    return -EINVAL;
+    break;
+
+  default: /* can't happen */
+    return -EINVAL;
+  }
+
+  if (newpos < 0)
+    return -EINVAL;
+  PDEBUG("seek pos to: %lld", newpos);
+  filp->f_pos = newpos;
+  return newpos;
+}
+
 struct file_operations aesd_fops = {
     .owner = THIS_MODULE,
     .read = aesd_read,
+    .llseek = aesd_llseek,
     .write = aesd_write,
     .open = aesd_open,
     .release = aesd_release,
