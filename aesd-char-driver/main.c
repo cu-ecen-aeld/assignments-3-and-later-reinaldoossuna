@@ -60,8 +60,32 @@ ssize_t aesd_write(struct file *filp, const char __user *buf, size_t count,
   ssize_t retval = -ENOMEM;
   PDEBUG("write %zu bytes with offset %lld", count, *f_pos);
   /**
-   * TODO: handle write
+   * TODO: handle partial write
+   * TODO: handle overwriten messages
    */
+
+  struct aesd_dev *dev = (struct aesd_dev *)filp->private_data;
+  if (mutex_lock_interruptible(&dev->buffer_mutex)) {
+    return -EINTR;
+  }
+
+  char *buffptr = (char *)kmalloc(count, GFP_KERNEL);
+  if (!buffptr) {
+    goto out;
+  }
+
+  if (copy_from_user(buffptr, buf, count)) {
+    retval = -EFAULT;
+    kfree(buffptr);
+    goto out;
+  }
+
+  struct aesd_buffer_entry entry = {.buffptr = buffptr, .size = count};
+  PDEBUG("Wrote: %s", buffptr);
+  aesd_circular_buffer_add_entry(&dev->buffer, &entry);
+
+out:
+  mutex_unlock(&dev->buffer_mutex);
   return retval;
 }
 struct file_operations aesd_fops = {
@@ -112,7 +136,7 @@ void aesd_cleanup_module(void) {
 
   cdev_del(&aesd_device.cdev);
 
-   uint8_t index;
+  uint8_t index;
   struct aesd_buffer_entry *entry;
 
   while (mutex_lock_interruptible(&aesd_device.buffer_mutex) != 0) {
