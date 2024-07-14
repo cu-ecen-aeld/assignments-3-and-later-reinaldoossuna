@@ -48,6 +48,10 @@ struct aesd_circular_buffer {
    * set to true when the buffer entry structure is full
    */
   bool full;
+  /*
+  ** Sum of all size entries
+  */
+  size_t size;
 };
 
 extern struct aesd_buffer_entry *
