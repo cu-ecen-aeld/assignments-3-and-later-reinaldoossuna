@@ -172,7 +172,7 @@ loff_t aesd_llseek(struct file *filp, loff_t off, int whence) {
     break;
 
   case 2: /* SEEK_END */
-    /* newpos = dev->size + off; */
+    newpos = dev->buffer.size + off;
     return -EINVAL;
     break;
 
