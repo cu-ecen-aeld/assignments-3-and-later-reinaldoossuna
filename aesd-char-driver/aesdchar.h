@@ -28,6 +28,16 @@
 
 #include "aesd-circular-buffer.h"
 
+int aesd_open(struct inode *inode, struct file *filp);
+void aesd_cleanup_module(void);
+int aesd_init_module(void);
+ssize_t aesd_write(struct file *filp, const char __user *buf, size_t count,
+                   loff_t *f_pos);
+ssize_t aesd_read(struct file *filp, char __user *buf, size_t count,
+                  loff_t *f_pos);
+int aesd_release(struct inode *inode, struct file *filp);
+loff_t aesd_llseek(struct file *filp, loff_t off, int whence);
+
 struct aesd_dev {
   struct cdev cdev; /* Char device structure      */
 
