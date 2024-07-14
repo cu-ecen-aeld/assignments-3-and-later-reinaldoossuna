@@ -73,14 +73,18 @@ ssize_t aesd_read(struct file *filp, char __user *buf, size_t count,
     goto out;
   }
 
+  size_t size_offsetted = entry->size - entry_offset;
+  const char * buffptr = entry->buffptr + entry_offset;
   PDEBUG("Read: %.*s", (int)entry->size, entry->buffptr);
-  if (copy_to_user(buf, entry->buffptr, entry->size)) {
+  PDEBUG("Read Offsetted: %.*s", (int)size_offsetted,
+         buffptr);
+  if (copy_to_user(buf, buffptr, size_offsetted)) {
     retval = -EFAULT;
     goto out;
   }
 
-  *f_pos += entry->size;
-  retval = entry->size;
+  *f_pos += size_offsetted;
+  retval = size_offsetted;
 
 out:
   mutex_unlock(&dev->buffer_mutex);
