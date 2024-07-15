@@ -66,10 +66,9 @@ ssize_t aesd_read(struct file *filp, char __user *buf, size_t count,
   }
 
   size_t size_offsetted = entry->size - entry_offset;
-  const char * buffptr = entry->buffptr + entry_offset;
+  const char *buffptr = entry->buffptr + entry_offset;
   PDEBUG("Read: %.*s", (int)entry->size, entry->buffptr);
-  PDEBUG("Read Offsetted: %.*s", (int)size_offsetted,
-         buffptr);
+  PDEBUG("Read Offsetted: %.*s", (int)size_offsetted, buffptr);
   if (copy_to_user(buf, buffptr, size_offsetted)) {
     retval = -EFAULT;
     goto out;
@@ -187,14 +186,14 @@ long aesd_ioctl(struct file *filp, unsigned int cmd, unsigned long arg) {
 
   PDEBUG("ioctl: cmd: %d arg: %lul", cmd, arg);
   int retval = 0;
+  uint8_t index;
+  struct aesd_buffer_entry *entry;
+  long offset = 0;
 
   struct aesd_seekto seekto_arg;
 
   switch (cmd) {
   case AESDCHAR_IOCSEEKTO:
-    uint8_t index;
-    struct aesd_buffer_entry *entry;
-    long offset = 0;
     copy_from_user(&seekto_arg, (void __user *)arg, sizeof(struct aesd_seekto));
 
     PDEBUG("ioctl: iocseekto cmd: %d offset: %d", seekto_arg.write_cmd,
