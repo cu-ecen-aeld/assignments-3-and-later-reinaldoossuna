@@ -37,6 +37,7 @@ ssize_t aesd_read(struct file *filp, char __user *buf, size_t count,
                   loff_t *f_pos);
 int aesd_release(struct inode *inode, struct file *filp);
 loff_t aesd_llseek(struct file *filp, loff_t off, int whence);
+long aesd_ioctl(struct file *filp, unsigned int cmd, unsigned long arg);
 
 struct aesd_dev {
   struct cdev cdev; /* Char device structure      */

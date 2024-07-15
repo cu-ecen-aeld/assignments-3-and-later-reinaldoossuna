@@ -11,6 +11,7 @@
  *
  */
 
+#include "aesd_ioctl.h"
 #include "aesdchar.h"
 #include <linux/fs.h> // file_operations
 #include <linux/init.h>
@@ -182,6 +183,39 @@ loff_t aesd_llseek(struct file *filp, loff_t off, int whence) {
   return newpos;
 }
 
+long aesd_ioctl(struct file *filp, unsigned int cmd, unsigned long arg) {
+
+  PDEBUG("ioctl: cmd: %d arg: %lul", cmd, arg);
+  int retval = 0;
+
+  struct aesd_seekto seekto_arg;
+
+  switch (cmd) {
+  case AESDCHAR_IOCSEEKTO:
+    uint8_t index;
+    struct aesd_buffer_entry *entry;
+    long offset = 0;
+    copy_from_user(&seekto_arg, (void __user *)arg, sizeof(struct aesd_seekto));
+
+    PDEBUG("ioctl: iocseekto cmd: %d offset: %d", seekto_arg.write_cmd,
+           seekto_arg.write_cmd_offset);
+
+    AESD_CIRCULAR_BUFFER_FOREACH(entry, &aesd_device.buffer, index) {
+      if (index == seekto_arg.write_cmd) {
+        break;
+      }
+      offset += entry->size;
+    }
+
+    offset += seekto_arg.write_cmd_offset;
+    retval = aesd_llseek(filp, offset, 1);
+    break;
+  default:
+    return -ENOTTY;
+  }
+  return retval;
+}
+
 struct file_operations aesd_fops = {
     .owner = THIS_MODULE,
     .read = aesd_read,
@@ -189,6 +223,7 @@ struct file_operations aesd_fops = {
     .write = aesd_write,
     .open = aesd_open,
     .release = aesd_release,
+    .unlocked_ioctl = aesd_ioctl,
 };
 
 static int aesd_setup_cdev(struct aesd_dev *dev) {
