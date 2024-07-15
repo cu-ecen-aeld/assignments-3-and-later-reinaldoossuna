@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/ioctl.h>
 
 #include "aesdsocket.h"
 
@@ -13,6 +14,7 @@ pthread_mutex_t fptr_mutex = PTHREAD_MUTEX_INITIALIZER;
 bool should_close = false;
 static void signal_handler(int signo);
 void *time_writer_work(void *arg);
+struct aesd_seekto *seekto_arg = NULL;
 
 static void *thread_work(void *arg) {
   thread_info_t *tinfo = (thread_info_t *)arg;
@@ -138,8 +140,19 @@ void recv_to_file(int fd) {
     if ((bytes_recv = recv(fd, recv_buf, MAXDATASIZE, 0)) == -1) {
       ERROR_LOG("recv");
     }
-    DEBUG_LOG("receive from client: %s", recv_buf);
-    fwrite(recv_buf, bytes_recv, 1, fptr);
+
+    if (strncmp(recv_buf, COMMAND, strlen(COMMAND)) == 0) {
+      DEBUG_LOG("received command: %s", recv_buf);
+      if (seekto_arg == NULL)
+        seekto_arg = (struct aesd_seekto *)malloc(sizeof(struct aesd_seekto));
+
+      char *end;
+      seekto_arg->write_cmd = strtoul(recv_buf + strlen(COMMAND), &end, 10);
+      seekto_arg->write_cmd_offset = strtoul(end + 1, &end, 10);
+    } else {
+      DEBUG_LOG("receive from client: %s", recv_buf);
+      fwrite(recv_buf, bytes_recv, 1, fptr);
+    }
   } while (bytes_recv == MAXDATASIZE);
 
   free(recv_buf);
@@ -147,6 +160,9 @@ void recv_to_file(int fd) {
 
 void send_file(int fd) {
   fseek(fptr, 0, SEEK_SET); // seek to begin of file
+  ioctl(fileno(fptr), AESDCHAR_IOCSEEKTO, seekto_arg);
+  free(seekto_arg);
+  seekto_arg=NULL;
 
   char sendbuffer[124];
   int b;

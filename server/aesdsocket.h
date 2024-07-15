@@ -11,6 +11,7 @@
 #include <sys/wait.h>
 #include <syslog.h>
 #include <unistd.h>
+#include "../aesd-char-driver/aesd_ioctl.h"
 
 #include "queue.h"
 
@@ -45,6 +46,8 @@
 #endif
 
 #define UNUSED(x) (void)(x)
+
+#define COMMAND "AESDCHAR_IOCSEEKTO:"
 
 void recv_to_file(int fd);
 void send_file(int fd);
